@@ -1,14 +1,17 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
+
+from emergentintegrations.llm.chat import LlmChat, UserMessage, TextDelta, StreamDone
 
 
 ROOT_DIR = Path(__file__).parent
@@ -19,54 +22,106 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
-app = FastAPI()
+EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 
-# Create a router with the /api prefix
+app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
+# ============ Models ============
+class Appointment(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    full_name: str
+    email: EmailStr
+    phone: str
+    service: str
+    preferred_date: str
+    message: Optional[str] = ""
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
 
-# Add your routes to the router instead of directly to app
+class AppointmentCreate(BaseModel):
+    full_name: str = Field(..., min_length=2, max_length=120)
+    email: EmailStr
+    phone: str = Field(..., min_length=6, max_length=30)
+    service: str
+    preferred_date: str
+    message: Optional[str] = ""
+
+
+class ChatRequest(BaseModel):
+    session_id: str
+    message: str
+
+
+# ============ Routes ============
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Smile Dental Clinic API"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
+@api_router.post("/appointments", response_model=Appointment)
+async def create_appointment(payload: AppointmentCreate):
+    appt = Appointment(**payload.model_dump())
+    doc = appt.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    await db.appointments.insert_one(doc)
+    return appt
 
-# Include the router in the main app
+
+@api_router.get("/appointments", response_model=List[Appointment])
+async def list_appointments():
+    docs = await db.appointments.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    for d in docs:
+        if isinstance(d.get('created_at'), str):
+            d['created_at'] = datetime.fromisoformat(d['created_at'])
+    return docs
+
+
+SYSTEM_PROMPT = (
+    "You are Smile Assistant, the friendly AI concierge for Smile Dental Clinic. "
+    "You help visitors with questions about services (general dentistry, cosmetic dentistry, "
+    "orthodontics, emergency care, teeth whitening, implants), booking appointments, clinic hours "
+    "(Mon-Fri 9am-7pm, Sat 9am-2pm), insurance, and dental care tips. "
+    "Keep responses warm, concise (2-4 sentences), and reassuring. "
+    "If a user wants to book, encourage them to use the 'Book Appointment' button on the page. "
+    "Never provide emergency medical diagnosis - direct emergencies to call the clinic at +1 (555) 123-4567."
+)
+
+
+@api_router.post("/chat/stream")
+async def chat_stream(req: ChatRequest):
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(status_code=500, detail="LLM key not configured")
+
+    chat = LlmChat(
+        api_key=EMERGENT_LLM_KEY,
+        session_id=req.session_id,
+        system_message=SYSTEM_PROMPT,
+    ).with_model("gemini", "gemini-3-flash-preview")
+
+    async def event_generator():
+        try:
+            async for event in chat.stream_message(UserMessage(text=req.message)):
+                if isinstance(event, TextDelta):
+                    # SSE data frame
+                    yield f"data: {event.content}\n\n"
+                elif isinstance(event, StreamDone):
+                    yield "data: [DONE]\n\n"
+                    break
+        except Exception as e:
+            logger.exception("Chat stream error")
+            yield f"data: [ERROR] {str(e)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 app.include_router(api_router)
 
 app.add_middleware(
@@ -77,12 +132,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
