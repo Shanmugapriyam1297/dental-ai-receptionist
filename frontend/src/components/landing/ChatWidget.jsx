@@ -122,7 +122,7 @@ export default function ChatWidget() {
         <button
           data-testid="ai-chat-toggle-button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white grid place-items-center shadow-2xl shadow-blue-900/25 pulse-ring transition-all hover:scale-105"
+          className="fixed bottom-24 right-6 z-50 h-14 w-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white grid place-items-center shadow-2xl shadow-blue-900/25 pulse-ring transition-all hover:scale-105"
           aria-label="Open chat"
         >
           <MessageCircle className="h-6 w-6" />
@@ -132,7 +132,7 @@ export default function ChatWidget() {
       {open && (
         <div
           data-testid="ai-chat-panel"
-          className="fixed bottom-6 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-96 h-[520px] max-h-[80vh] rounded-2xl bg-white border border-slate-200 shadow-2xl shadow-blue-900/20 flex flex-col overflow-hidden animate-fade-in-up"
+          className="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-96 h-[520px] max-h-[75vh] rounded-2xl bg-white border border-slate-200 shadow-2xl shadow-blue-900/20 flex flex-col overflow-hidden animate-fade-in-up"
         >
           <div className="flex items-center justify-between px-4 py-3 bg-blue-600 text-white">
             <div className="flex items-center gap-2">
