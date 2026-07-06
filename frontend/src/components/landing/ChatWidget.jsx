@@ -1,6 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MessageCircle, X, Send, Sparkles, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Sparkles, Loader2, Calendar, Phone } from "lucide-react";
 import { API } from "@/lib/api";
+
+const CLINIC_PHONE = "+1 (555) 123-4567";
+const CLINIC_PHONE_TEL = "+15551234567";
+
+const detectActions = (text) => {
+  if (!text) return { book: false, call: false };
+  const t = text.toLowerCase();
+  const book =
+    t.includes("book appointment") ||
+    t.includes("book an appointment") ||
+    t.includes("schedule") ||
+    t.includes("'book appointment'");
+  const call =
+    t.includes("call us") ||
+    t.includes("call the clinic") ||
+    t.includes("call our") ||
+    t.includes("emergency") ||
+    t.includes("(555) 123-4567") ||
+    t.includes("555) 123-4567") ||
+    t.includes("555-123-4567");
+  return { book, call };
+};
 
 const genId = () =>
   "sess-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -11,7 +33,7 @@ const WELCOME = {
     "Hi! I'm Smile Assistant. Ask me about our services, hours, or how to book an appointment.",
 };
 
-export default function ChatWidget() {
+export default function ChatWidget({ onBook }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([WELCOME]);
   const [input, setInput] = useState("");
@@ -163,25 +185,59 @@ export default function ChatWidget() {
             className="flex-1 overflow-y-auto chat-scroll px-4 py-4 space-y-3 bg-sky-50/40"
             data-testid="ai-chat-messages"
           >
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={`flex ${
-                  m.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
+            {messages.map((m, i) => {
+              const actions =
+                m.role === "assistant" && !m.streaming
+                  ? detectActions(m.content)
+                  : { book: false, call: false };
+              return (
                 <div
-                  data-testid={`ai-chat-message-${m.role}`}
-                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
-                    m.role === "user"
-                      ? "bg-blue-600 text-white rounded-br-sm"
-                      : "bg-white text-slate-800 border border-slate-200 rounded-bl-sm"
+                  key={i}
+                  className={`flex flex-col ${
+                    m.role === "user" ? "items-end" : "items-start"
                   }`}
                 >
-                  {m.content || (m.streaming ? "…" : "")}
+                  <div
+                    data-testid={`ai-chat-message-${m.role}`}
+                    className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                      m.role === "user"
+                        ? "bg-blue-600 text-white rounded-br-sm"
+                        : "bg-white text-slate-800 border border-slate-200 rounded-bl-sm"
+                    }`}
+                  >
+                    {m.content || (m.streaming ? "…" : "")}
+                  </div>
+
+                  {(actions.book || actions.call) && (
+                    <div className="mt-2 flex flex-col gap-2 max-w-[85%] w-full">
+                      {actions.book && (
+                        <button
+                          data-testid="ai-chat-book-button"
+                          onClick={() => {
+                            setOpen(false);
+                            onBook && onBook();
+                          }}
+                          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium h-10 px-4 shadow-sm shadow-blue-600/20 transition-colors"
+                        >
+                          <Calendar className="h-4 w-4" />
+                          Book Appointment
+                        </button>
+                      )}
+                      {actions.call && (
+                        <a
+                          data-testid="ai-chat-call-button"
+                          href={`tel:${CLINIC_PHONE_TEL}`}
+                          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 text-sm font-medium h-10 px-4 transition-colors"
+                        >
+                          <Phone className="h-4 w-4" />
+                          Call {CLINIC_PHONE}
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="border-t border-slate-200 p-3 bg-white">

@@ -40,7 +40,7 @@ export default function Landing() {
         prefillService={prefillService}
       />
 
-      <ChatWidget />
+      <ChatWidget onBook={() => openBooking()} />
     </div>
   );
 }
