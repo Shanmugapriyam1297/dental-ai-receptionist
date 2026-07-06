@@ -1,0 +1,144 @@
+{
+  "project_name": "Smile Dental Clinic Landing Page",
+  "theme_and_archetype": {
+    "theme": "Light",
+    "archetype": "Archetype 1 (Organic & Earthy / Medical Adaptation)",
+    "description": "A clean, trustworthy, and modern blue-and-white theme tailored for healthcare. Prioritizes hygiene, professionalism, and patient comfort."
+  },
+  "color_palette": {
+    "primary": {
+      "base": "blue-600",
+      "hover": "blue-700",
+      "hex": "#2563EB",
+      "description": "Main medical blue used for CTAs, prominent icons, and emphasized text."
+    },
+    "secondary": {
+      "base": "sky-50",
+      "hex": "#F0F9FF",
+      "description": "Soft background tint to separate sections without using harsh grays."
+    },
+    "background": "white",
+    "text": {
+      "heading": "slate-900",
+      "body": "slate-600",
+      "muted": "slate-400"
+    },
+    "border": "slate-200"
+  },
+  "typography": {
+    "imports": [
+      "@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');",
+      "@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&display=swap');"
+    ],
+    "fonts": {
+      "heading": "'Outfit', sans-serif",
+      "body": "'Manrope', sans-serif"
+    },
+    "scale": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900",
+      "h2": "text-3xl sm:text-4xl font-bold tracking-tight text-slate-900",
+      "h3": "text-xl sm:text-2xl font-semibold text-slate-900",
+      "body": "text-base text-slate-600 leading-relaxed",
+      "small": "text-sm text-slate-500"
+    }
+  },
+  "spacing_and_layout": {
+    "section_padding": "py-20 md:py-32 px-4 md:px-8",
+    "container_max_width": "max-w-7xl mx-auto",
+    "border_radius": {
+      "card": "rounded-2xl",
+      "button": "rounded-full",
+      "image": "rounded-3xl"
+    },
+    "shadows": {
+      "card_default": "shadow-sm",
+      "card_hover": "shadow-xl shadow-blue-900/5",
+      "floating_widget": "shadow-2xl shadow-blue-900/20"
+    }
+  },
+  "sections": [
+    {
+      "name": "Navigation / Header",
+      "layout": "Sticky top, z-50, backdrop-blur-xl bg-white/80 border-b border-slate-100.",
+      "content": "Logo on left, Nav links center (Services, About, Testimonials, Contact), 'Book Appointment' CTA on right."
+    },
+    {
+      "name": "Hero Section",
+      "layout": "Two-column grid (grid-cols-1 lg:grid-cols-2) with gap-12. Left: Typography + CTA. Right: Large hero image.",
+      "content": "Headline (e.g., 'Modern Dental Care for a Brighter Smile'), Subheadline explaining services, prominent 'Book Appointment' button. Image uses rounded-3xl with a subtle offset background blob or pattern."
+    },
+    {
+      "name": "Services",
+      "layout": "Grid layout (grid-cols-1 md:grid-cols-2 lg:grid-cols-4) with gap-6. Section background: sky-50.",
+      "content": "Cards for General Dentistry, Cosmetic, Orthodontics, Emergency. Cards have white bg, rounded-2xl, blue icons, title, short description. Subtle hover lift."
+    },
+    {
+      "name": "About the Doctor",
+      "layout": "Two-column grid (grid-cols-1 md:grid-cols-2) items-center gap-16.",
+      "content": "Doctor portrait image on left (rounded-3xl, shadow-lg). Text on right: Name, Credentials, short bio emphasizing care and experience."
+    },
+    {
+      "name": "Testimonials",
+      "layout": "Three-column grid (grid-cols-1 md:grid-cols-3) gap-8.",
+      "content": "Testimonial cards with 5 blue stars, patient quote, small circular avatar, and patient name."
+    },
+    {
+      "name": "Contact & Booking",
+      "layout": "Two-column grid. Left: Contact info, map/address, hours. Right: Booking form.",
+      "content": "Form uses Shadcn (Input, Select for service type, Date picker if available or text input, Textarea for message, submit Button). Section background: sky-50."
+    },
+    {
+      "name": "Floating AI Chat Widget",
+      "layout": "Fixed bottom-6 right-6 z-50.",
+      "content": "A rounded-full button with a MessageCircle icon. On click, toggles a chat panel (w-80 or w-96, rounded-2xl, shadow-2xl). The panel has a blue header ('Gemini AI Assistant'), a scrollable message area, and an input box at the bottom."
+    }
+  ],
+  "components_strategy": {
+    "shadcn_usage": [
+      "Button (customized for rounded-full and blue-600)",
+      "Input, Textarea, Select (for contact form)",
+      "Card (for services and testimonials)",
+      "Sheet or generic Dialog/fixed div for the AI Chat toggle"
+    ],
+    "icons": "lucide-react (Tooth, Calendar, Phone, MapPin, Star, MessageCircle, Clock)"
+  },
+  "testing_guidelines": {
+    "requirement": "All interactive elements MUST have a data-testid attribute.",
+    "examples": [
+      "data-testid='nav-book-appointment-button'",
+      "data-testid='hero-book-appointment-button'",
+      "data-testid='contact-form-submit'",
+      "data-testid='ai-chat-toggle-button'",
+      "data-testid='ai-chat-input'",
+      "data-testid='ai-chat-send-button'"
+    ]
+  },
+  "image_urls": {
+    "hero_image": {
+      "url": "https://images.pexels.com/photos/9062527/pexels-photo-9062527.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Bright and sterile dental clinic room featuring modern equipment."
+    },
+    "doctor_portrait": {
+      "url": "https://images.pexels.com/photos/17792882/pexels-photo-17792882.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "A confident male dentist in a dental office, posing with arms crossed."
+    },
+    "testimonials": [
+      {
+        "url": "https://images.unsplash.com/photo-1508002366005-75a695ee2d17?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDV8MHwxfHNlYXJjaHwyfHxoYXBweSUyMHBhdGllbnQlMjBiZWF1dGlmdWwlMjBzbWlsZXxlbnwwfHx8fDE3ODMzMjIxOTh8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Smiling female patient."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1489278353717-f64c6ee8a4d2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDV8MHwxfHNlYXJjaHwxfHxoYXBweSUyMHBhdGllbnQlMjBiZWF1dGlmdWwlMjBzbWlsZXxlbnwwfHx8fDE3ODMzMjIxOTh8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Smiling female patient with long black hair."
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Install 'lucide-react' for icons.",
+    "Add 'Outfit' and 'Manrope' fonts to the global CSS.",
+    "Use Tailwind HTML for major structure and Shadcn components for complex interactions like Forms and Selects.",
+    "Ensure the Floating AI Chat is visually distinct (bottom-right) and includes mock logic or Gemini API setup as per standard environment.",
+    "Strictly follow the color_palette to avoid muddy or neon colors. The theme MUST remain clean, blue, and white.",
+    "Use 'data-testid' on ALL CTAs, form inputs, and the chat widget buttons to satisfy testing protocols."
+  ]
+}
