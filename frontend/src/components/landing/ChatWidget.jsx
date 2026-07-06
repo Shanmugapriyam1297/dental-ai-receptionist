@@ -1,27 +1,43 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MessageCircle, X, Send, Sparkles, Loader2, Calendar, Phone } from "lucide-react";
+import { MessageCircle, X, Send, Sparkles, Loader2, Calendar, Phone, Star } from "lucide-react";
 import { API } from "@/lib/api";
 
 const CLINIC_PHONE = "+1 (555) 123-4567";
 const CLINIC_PHONE_TEL = "+15551234567";
 
+// Only show action buttons when the assistant is actively directing the user.
+// Match specific directive phrases (not just any mention of "appointment").
 const detectActions = (text) => {
-  if (!text) return { book: false, call: false };
+  if (!text) return { book: false, call: false, reviews: false };
   const t = text.toLowerCase();
+
   const book =
-    t.includes("book appointment") ||
-    t.includes("book an appointment") ||
-    t.includes("schedule") ||
-    t.includes("'book appointment'");
+    /\b(click|tap|use|press|hit)\b[^.]{0,40}\bbook appointment\b/.test(t) ||
+    t.includes("book appointment' button") ||
+    t.includes('book appointment" button') ||
+    t.includes("book-appointment button") ||
+    t.includes("book your appointment") ||
+    t.includes("schedule your visit") ||
+    t.includes("schedule a visit");
+
   const call =
-    t.includes("call us") ||
+    t.includes("call us at") ||
     t.includes("call the clinic") ||
-    t.includes("call our") ||
-    t.includes("emergency") ||
+    t.includes("call our clinic") ||
+    t.includes("call us directly") ||
     t.includes("(555) 123-4567") ||
-    t.includes("555) 123-4567") ||
     t.includes("555-123-4567");
-  return { book, call };
+
+  const reviews =
+    t.includes("testimonials section") ||
+    t.includes("patient reviews") ||
+    t.includes("read our reviews") ||
+    t.includes("view our reviews") ||
+    t.includes("check our reviews") ||
+    t.includes("see our reviews") ||
+    t.includes("our testimonials");
+
+  return { book, call, reviews };
 };
 
 const genId = () =>
@@ -29,8 +45,9 @@ const genId = () =>
 
 const WELCOME = {
   role: "assistant",
+  isWelcome: true,
   content:
-    "Hi! I'm Smile Assistant. Ask me about our services, hours, or how to book an appointment.",
+    "Hi! I'm Smile Assistant. Ask me about our services, hours, dental care tips, or anything else — I'm here to help.",
 };
 
 export default function ChatWidget({ onBook }) {
@@ -187,9 +204,9 @@ export default function ChatWidget({ onBook }) {
           >
             {messages.map((m, i) => {
               const actions =
-                m.role === "assistant" && !m.streaming
+                m.role === "assistant" && !m.streaming && !m.isWelcome
                   ? detectActions(m.content)
-                  : { book: false, call: false };
+                  : { book: false, call: false, reviews: false };
               return (
                 <div
                   key={i}
@@ -208,7 +225,7 @@ export default function ChatWidget({ onBook }) {
                     {m.content || (m.streaming ? "…" : "")}
                   </div>
 
-                  {(actions.book || actions.call) && (
+                  {(actions.book || actions.call || actions.reviews) && (
                     <div className="mt-2 flex flex-col gap-2 max-w-[85%] w-full">
                       {actions.book && (
                         <button
@@ -231,6 +248,17 @@ export default function ChatWidget({ onBook }) {
                         >
                           <Phone className="h-4 w-4" />
                           Call {CLINIC_PHONE}
+                        </a>
+                      )}
+                      {actions.reviews && (
+                        <a
+                          data-testid="ai-chat-reviews-button"
+                          href="#testimonials"
+                          onClick={() => setOpen(false)}
+                          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 text-sm font-medium h-10 px-4 transition-colors"
+                        >
+                          <Star className="h-4 w-4" />
+                          Read patient reviews
                         </a>
                       )}
                     </div>
